@@ -1,0 +1,16 @@
+services:
+  db:
+    image: mysql:8.0 
+    container_name: mysql-typeorm
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword 
+      MYSQL_DATABASE: typeorm_demo 
+      MYSQL_USER: huuloc2026 
+      MYSQL_PASSWORD: 123456 
+    ports:
+      - "3306:3306" 
+    networks:
+      - my-network
+networks:
+  my-network:
+    driver: bridge
