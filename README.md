@@ -28,7 +28,7 @@ This project is a news portal system that manages content and user interactions,
 
 ## Technologies Used:
 - **Backend:** Node.js, Express.js
-- **Database:** MongoDB (or SQL, based on requirements)
+- **Database:** MySQL
 - **Authentication:** JWT (JSON Web Tokens), Bcrypt (for password hashing)
 - **Caching:** Redis (for caching articles, user interactions, and comments)
 - **Email Service:** Nodemailer (for email verification)
