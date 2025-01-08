@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Comment } from "modules/comments/comment.entity";
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity("posts")
 export class Post {
@@ -31,12 +32,16 @@ export class Post {
 
     @Column({ type: "varchar", length: 500 })
     description!: string;
-
+    
     @Column({ type: "int", default: 0 })
     views!: number;
 
     @Column({type: "int", default: 0 })
     commentsCount!: number;
+
+    @OneToMany(() => Comment, (comment) => comment.post, { onDelete: "CASCADE" })
+    comments?: Comment[];
+
 
     // constructor(id: number, title: string, content: string, category: string, dateTime: Date, author: string, tags: string[], status: string, description: string, views: number, commentsCount: number){
     //     this.id = id

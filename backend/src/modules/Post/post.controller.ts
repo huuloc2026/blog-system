@@ -17,43 +17,57 @@ class PostController {
     ) {
         this.postService = Container.get(PostService)
     }
-
     PostNews: RequestHandler = AsyncHandler(async (req: Request, res: Response, next: NextFunction): Promise<any> => {
         const inputPost = await this.postService.createNews(req.body)
-        //can not use this.newsPostService = Container.get(PostService)
         return responseHandler.success(res, StatusCodes.CREATED, inputPost, "created news successfully")
 
     })
     updateNews: RequestHandler = AsyncHandler(async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-        const {id} = req.params
+        const { id } = req.params
         const dataUpdate = req.body
-        const checkNews = await this.postService.getNewsbyId(+id)
-        
-        // Cập nhật bài viết
         const updatedPost = await this.postService.updateNews(+id, dataUpdate);
-        return responseHandler.success(res,StatusCodes.CREATED,updatedPost,"update successfully")
+        return responseHandler.success(res, StatusCodes.CREATED, updatedPost, "update successfully")
     })
-    getPostbyId: RequestHandler = AsyncHandler(async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-        const {id} = req.params
-        if(!id) throw new NotFoundError("Not found Id")
-        //step 1: check cache
-        const { postKey } = generateKeyPost(id)
-        const check = await redisService.checkKey(postKey)
-        // if key exist in cached -> get from cached
-        if (check){
-            console.log(`GET FROM CACHE::: key of Post have exist`);
-            const resultCached = await redisService.checkKeyPostInRedis(postKey)
-            return responseHandler.success(res, StatusCodes.ACCEPTED, resultCached, "get successfully with id")
+    //TODO: notes oke but need refactor
+    // have 2 features save bookmark and viewd news
+    getNewsbyId: RequestHandler = AsyncHandler(async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+        const { id } = req.params
+        const {bookmark} = req.body
+        let isBookmark = false
+        if(bookmark){
+            isBookmark = true
         }
-        //step 2: if NOT -> get in database and save in cache
-        console.clear()
-        console.log(`GET FROM DB...`);
-        const findPostbyId = await this.postService.getNewsbyId(+id)
-        //step 3: save cache 
-        const rs = await redisService.saveJsonPostToRedis(postKey, findPostbyId)
-        if(!rs){throw new Error("faild save post to cached")}
-        return responseHandler.success(res, StatusCodes.ACCEPTED, findPostbyId, "get successfully with id")
-        })
+        const {userId,email} = req
+        if (!id || !userId) throw new NotFoundError("Not found")
+        return responseHandler.success(res,
+            StatusCodes.ACCEPTED,
+            await this.postService.getPostbyId(id, email, isBookmark),
+            "get successfully with id")
+    }
+    )
+    getBookmark: RequestHandler = AsyncHandler(async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+        const { email } = req
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 10;
+        if (!email) throw new NotFoundError("userId Not found")
+        return responseHandler.success(res,
+            StatusCodes.ACCEPTED,
+            await this.postService.getBookmarkById(email,page,limit),
+            "getBookmark successfully with id")
+    })
+
+    getviewd: RequestHandler = AsyncHandler(async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+        const {email} = req
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 10;
+        if (!email) throw new NotFoundError("userId Not found")
+        return responseHandler.success(res,
+            StatusCodes.ACCEPTED,
+            await this.postService.getViewbyId(email,page,limit),
+            "getBookmark successfully with id")
+    })
+
+
     getPostbyCategory: RequestHandler = AsyncHandler(async (req: Request, res: Response, next: NextFunction): Promise<any> => {
         const { categorySlug } = req.params
         //step 1. check cache
@@ -61,11 +75,15 @@ class PostController {
         //step 2. get from repo Post 
         //step 3. check slug exist 
         //step 4. save to cache
-        
+
         const page = parseInt(req.query.page as string, 10) || 1;
         const limit = parseInt(req.query.limit as string, 10) || 10;
         const offset = Number((page - 1) * limit)
-        const checkNewsExist = await this.postService.getNewsbyCatogory(categorySlug)
+
+        const checkNewsExist = await this.postService.getNewsbyCatogory(categorySlug, limit, offset)
+        console.log(checkNewsExist);
+        return res.send(checkNewsExist)
+        //const checkNewsExist = await this.postService.getNewsbyCatogory(categorySlug)
         console.log(checkNewsExist.length);
         const dataSlice = checkNewsExist.slice(offset)
         console.log(dataSlice.length);
@@ -74,7 +92,7 @@ class PostController {
                 "message": `successfully getPostbyCategory ${categorySlug}`,
                 "data": dataSlice,
             })
-        
+
         // const result = await this.newsPostService.getNewsbyCatogory({catoSlug:categorySlug,page,limit})
         // console.log(result);
         // res.status(200).json(result);

@@ -1,7 +1,7 @@
 import express from 'express';
 import UserController from 'modules/Users/user.controllers';
 import { validateMiddleware } from 'middlewares/validateMiddleware';
-import { ChangePasswordDTO, CreateUserDTO, GetUserbyIdDTO, RegisterNewUserDTO, UpdateInforUserDTO } from 'modules/Users/user.dto';
+import { ChangePasswordDTO, CreateUserDTO, GetUserbyIdDTO, RegisterNewUserDTO, UpdateInforUserDTO } from 'modules/Users/DTO/user.dto';
 import { authenticateAccessToken } from 'middlewares/authenticateAccessToken';
 import {Container} from 'typedi';
 

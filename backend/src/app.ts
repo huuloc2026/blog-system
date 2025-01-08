@@ -46,6 +46,8 @@ app.use(errorHandler);
         await connectRedis();
         //TODO: DISABLE TAM THOI DE TRANH SPAM
         //emailWorker
+
+        
         // Khởi động server
         app.listen(port, () => {
             console.log(`Server running on http://localhost:${port}`);

@@ -1,12 +1,15 @@
 // Import necessary modules and decorators
+import { Comment } from "modules/comments/comment.entity";
 import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
+  JoinColumn,
 } from "typeorm";
-import { IUser } from "./user.interface";
+
 
 @Entity("user")
 export class User {
@@ -37,7 +40,7 @@ export class User {
   @Column({ type: "text", nullable: true })
   address!: string;
 
-  @Column({ type: "varchar", enum: ["User", "Admin", "Moderator"], default: "User" })
+  @Column({ type: "enum", enum: ["User", "Admin", "Moderator"], default: "User" })
   role!: "User" | "Admin" | "Moderator";
 
   @Column({ type: "boolean", default: false })
@@ -48,6 +51,11 @@ export class User {
 
   @Column({type:"varchar",nullable:true})
   salt!: string
+
+  @OneToMany(() => Comment, (comment) => comment.user, { onDelete: "CASCADE" })
+  @JoinColumn()
+  comments!: [Comment]
+
 
   @Column({type:"blob",nullable:true})
   Avatar!:string

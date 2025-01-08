@@ -4,7 +4,8 @@ import { redisClient } from "modules/Redis/redis.init";
 import { StatusCodes, ReasonPhrases } from "http-status-codes";
 import { ConflictError, NotFoundError } from "utils/ApiError";
 import { generatePairKey } from "utils/GenerateKeyRedis";
-import { generateKeyPost } from "utils/GenerateKeyPost";
+import { generateBookmarkKeyPost, generateKeyPost, generateViewdKeyPost } from "utils/GenerateKeyPost";
+import { HelpParseJSON } from "utils/ParseJson";
 
 // Interface định nghĩa cấu trúc dữ liệu
 export interface RedisKeyStatus {
@@ -90,7 +91,7 @@ export const redisService = {
     }
   },
 
-  async checkKeyPostInRedis(key: string){
+  async getKeyPostInRedis(key: string){
     try {
       const timeAccess = parseInt(
         process.env.ACCESS_TOKEN_EXPIRE_TIME_REDIS || "30"
@@ -98,9 +99,9 @@ export const redisService = {
       const NewJsonKey = await redisClient.json.get(key, {
         path: "$",
       });
+      
       return NewJsonKey
     } catch (error) {
-      console.error(error);
       throw error
     }
   },
@@ -111,11 +112,13 @@ export const redisService = {
 
   async saveJsonPostToRedis(key:string,data:any):Promise<any>{
     try {
+
       const timeAccess = parseInt(
-        process.env.ACCESS_TOKEN_EXPIRE_TIME_REDIS || "30"
+        process.env.ACCESS_POST_EXPIRE_TIME_REDIS || "604800"
       );
-      // const rs = await redisClient.setEx(key, timeAccess, JSON.stringify(data));
       const NewJsonKey = await redisClient.json.set(key,"$",data)
+      await redisClient.expire(key, timeAccess);
+      console.log(`Key ${key} will expire in ${timeAccess} seconds ~ 7 days`);
       console.log("saved post to redis");
       return NewJsonKey
     } catch (error) {
@@ -123,6 +126,49 @@ export const redisService = {
       throw error
     }
   },
+
+  async GetViewdId(key: string, page: number, limit: number): Promise<any> {
+    const start = (page - 1) * limit;
+    const end = start + limit - 1;
+    const { viewKey } = generateViewdKeyPost(key)
+    const total = await redisClient.lLen(viewKey);
+    const viewedPosts = await redisClient.lRange(viewKey, start, end);
+    return {
+      viewedPosts: HelpParseJSON(viewedPosts),
+      total,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit)
+    }
+  },
+  async SaveViewdId(key:string,data:any):Promise<any>{
+    const {viewKey} = generateViewdKeyPost(key)
+    const expriedTime = 30 * 24 * 60 * 60 || Number(process.env.expiredSaveViewd)
+    const viewedPost = await redisClient.lPush(viewKey, JSON.stringify(data))
+    await redisClient.expire(viewKey, expriedTime); // 30 ngày
+    return viewedPost
+  },
+  async GetSaveBookmarkId(key: string, page: number, limit: number): Promise<any> {
+    const start = (page - 1) * limit;
+    const end = start + limit - 1;
+    const { BookmarkKey } = generateBookmarkKeyPost(key)
+    const total = await redisClient.lLen(BookmarkKey);
+    const viewedPosts = await redisClient.lRange(BookmarkKey, start, end);
+    return {
+      viewedPosts: HelpParseJSON(viewedPosts),
+      total,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit)
+    }
+  },
+
+  async SaveBookmarkId(key: string, data: any): Promise<any> {
+    const { BookmarkKey } = generateBookmarkKeyPost(key)
+    const expriedTime = 30 * 24 * 60 * 60 || Number(process.env.expiredSaveViewd)
+    const viewedPost = await redisClient.lPush(BookmarkKey, JSON.stringify(data))
+    await redisClient.expire(BookmarkKey, expriedTime); // 30 ngày
+    return viewedPost
+  },
+
 
   // Lấy access token từ Redis
   async getAccessToken(userId: string): Promise<string | null> {

@@ -3,18 +3,20 @@ import { Post } from "modules/Post/post.entity";
 import { Faker, faker } from "@faker-js/faker";
 // Usage example
 import AppDataSource from "database/data-source";
-import { PostFactory, UsersFactory } from "./User.factory";
+import { AdminFactory, ModFactory, PostFactory, UsersFactory } from "./User.factory";
 import { User } from "modules/Users/user.entity";
 
 const seedPosts = async (dataSource: DataSource) => {
     const postRepository = dataSource.getRepository(Post);
     const UserRepository = dataSource.getRepository(User);
     const mockPosts = Array.from({ length: 200 }, () => PostFactory(faker))
-    const mockUsers = Array.from({ length: 20 }, () => UsersFactory(faker)); 
+    // const mockUsers = Array.from({ length: 20 }, () => UsersFactory(faker)); 
+    // const mockMod = Array.from({ length: 1 }, () => ModFactory(faker))
     await postRepository.save(mockPosts);
     console.log("Seeded posts into the database.");
-    await UserRepository.save(mockUsers);
-    console.log("Seeded users into the database.");
+    // await UserRepository.save(mockMod);
+    // await UserRepository.save(mockUsers);
+    // console.log("Seeded users into the database.");
 };
 
 

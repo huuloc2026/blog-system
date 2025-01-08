@@ -3,6 +3,7 @@ import { NewsCatogories } from "modules/Post/DTO/CreateNewsPostDTO";
 import { Post } from "modules/Post/post.entity";
 import { User } from "modules/Users/user.entity";
 import { setSeederFactory } from "typeorm-extension";
+import { hashPassword } from "utils/PasswordUtil";
 
 
 export const UsersFactory = (faker: Faker) => {
@@ -11,7 +12,26 @@ export const UsersFactory = (faker: Faker) => {
     user.email = faker.internet.email();
     user.password = "123456"
     user.phoneNumber = (faker.number.int({ min: 10,max:10 })).toString()
-    user.role = faker.helpers.arrayElement(["User","Moderator"]);
+    user.role = faker.helpers.arrayElement(["User"]);
+    return user;
+};
+
+export const AdminFactory = async (faker: Faker) => {
+    const user = new User();
+    user.name = faker.internet.userName();
+    user.email = "admin@gmail.com"
+    user.password = await hashPassword("123456")
+    user.phoneNumber = (faker.number.int({ min: 10, max: 10 })).toString()
+    user.role = faker.helpers.arrayElement(["Admin"]);
+    return user;
+};
+export const ModFactory = (faker: Faker) => {
+    const user = new User();
+    user.name = faker.internet.userName();
+    user.email = "mod@gmail.com"
+    user.password = "123456"
+    user.phoneNumber = (faker.number.int({ min: 10, max: 10 })).toString()
+    user.role = faker.helpers.arrayElement(["Moderator"]);
     return user;
 };
 

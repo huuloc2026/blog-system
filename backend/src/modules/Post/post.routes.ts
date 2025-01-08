@@ -16,11 +16,18 @@ import { UpdateNewsDTO } from './DTO/UpdateNewsDTO';
 const PostRouter = express.Router();
 
 const postContorller = Container.get(PostController);
+
+
+
 //validateMiddleware(CreateNewsPostDTO)
 
 PostRouter.use(authenticateAccessToken)
 
-PostRouter.get("/getpost/:id", postContorller.getPostbyId);
+PostRouter.get("/getpost/:id", postContorller.getNewsbyId);
+//bookmark
+PostRouter.get("/getbookmark/", postContorller.getBookmark);
+//viewd
+PostRouter.get("/getviewd/", postContorller.getviewd);
 
 PostRouter.get("/catagory/:categorySlug", postContorller.getPostbyCategory);
 
