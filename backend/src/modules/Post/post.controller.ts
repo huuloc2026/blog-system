@@ -70,33 +70,13 @@ class PostController {
 
     getPostbyCategory: RequestHandler = AsyncHandler(async (req: Request, res: Response, next: NextFunction): Promise<any> => {
         const { categorySlug } = req.params
-        //step 1. check cache
-
-        //step 2. get from repo Post 
-        //step 3. check slug exist 
-        //step 4. save to cache
-
         const page = parseInt(req.query.page as string, 10) || 1;
         const limit = parseInt(req.query.limit as string, 10) || 10;
-        const offset = Number((page - 1) * limit)
-
-        const checkNewsExist = await this.postService.getNewsbyCatogory(categorySlug, limit, offset)
-        console.log(checkNewsExist);
-        return res.send(checkNewsExist)
-        //const checkNewsExist = await this.postService.getNewsbyCatogory(categorySlug)
-        console.log(checkNewsExist.length);
-        const dataSlice = checkNewsExist.slice(offset)
-        console.log(dataSlice.length);
-        return res.status(201).json(
-            {
-                "message": `successfully getPostbyCategory ${categorySlug}`,
-                "data": dataSlice,
-            })
-
-        // const result = await this.newsPostService.getNewsbyCatogory({catoSlug:categorySlug,page,limit})
-        // console.log(result);
-        // res.status(200).json(result);
-        return res.send(`getPostbyCategory news oke`)
+        const checkNewsExist = await this.postService.getNewsbyCatogory(categorySlug, page, limit)
+        return responseHandler.success(res,
+            StatusCodes.ACCEPTED,
+            checkNewsExist,
+            `get categorySlug::: ${categorySlug} successfully with id`)
     })
 }
 

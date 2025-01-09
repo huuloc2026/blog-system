@@ -46,17 +46,6 @@ const connectRedis = async () => {
   }
 };
 
-const clearAllData = async () => {
-  try {
-    // Xóa tất cả các dữ liệu trong Redis
-    await redisClient.flushAll();
-    console.log("All Redis data has been cleared.");
-  } catch (err) {
-    console.error("Error clearing all data from Redis:", err);
-  }
-};
-
-
 process.on("SIGINT", async () => {
   console.log("Closing Redis connection...");
   if (redisClient.isOpen) {

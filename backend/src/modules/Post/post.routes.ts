@@ -22,18 +22,21 @@ const postContorller = Container.get(PostController);
 //validateMiddleware(CreateNewsPostDTO)
 
 PostRouter.use(authenticateAccessToken)
-
+//get by id
 PostRouter.get("/getpost/:id", postContorller.getNewsbyId);
-//bookmark
+
+// get by category with pagination
+PostRouter.get("/catagory/:categorySlug", postContorller.getPostbyCategory);
+//bookmark with pagination
 PostRouter.get("/getbookmark/", postContorller.getBookmark);
-//viewd
+//viewd with pagination
 PostRouter.get("/getviewd/", postContorller.getviewd);
 
-PostRouter.get("/catagory/:categorySlug", postContorller.getPostbyCategory);
 
 PostRouter.use(authorizationMiddleware([ROLE.ADMIN,ROLE.MOD]))
+//create news
 PostRouter.post("/createnewpost",validateMiddleware(CreateNewsPostDTO) ,postContorller.PostNews);
-
+//update news
 PostRouter.put("/updatepost/:id", validateMiddleware(UpdateNewsDTO), postContorller.updateNews);
 
 

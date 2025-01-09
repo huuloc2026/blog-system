@@ -18,9 +18,9 @@ CommentRouter.post("/createnewcomments", asyncHandlerV2(commentController.addCom
 
 CommentRouter.get("/getComments", AsyncHandler(commentController.getComments))
 
-CommentRouter.put("/updateComment", AsyncHandler(commentController.updateComment))
+CommentRouter.put("/updateComment/:commentId", asyncHandlerV2(commentController.updateComment))
 
-CommentRouter.delete("/deleteComment", AsyncHandler(commentController.deleteComment))
+CommentRouter.delete("/deleteComment/:commentId", asyncHandlerV2(commentController.deleteComment))
 
 CommentRouter.use(authorizationMiddleware([ROLE.ADMIN,ROLE.MOD]))
 // Route Admin - Mod - hide comments

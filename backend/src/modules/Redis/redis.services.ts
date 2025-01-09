@@ -4,8 +4,9 @@ import { redisClient } from "modules/Redis/redis.init";
 import { StatusCodes, ReasonPhrases } from "http-status-codes";
 import { ConflictError, NotFoundError } from "utils/ApiError";
 import { generatePairKey } from "utils/GenerateKeyRedis";
-import { generateBookmarkKeyPost, generateKeyPost, generateViewdKeyPost } from "utils/GenerateKeyPost";
-import { HelpParseJSON } from "utils/ParseJson";
+import { generateBookmarkKeyPost, generateKeyPost, generateSlugKeyPost, generateViewdKeyPost } from "utils/GenerateKeyPost";
+import { HelpParseJSON } from "utils/HelpParseJSON";
+
 
 // Interface định nghĩa cấu trúc dữ liệu
 export interface RedisKeyStatus {
@@ -24,23 +25,18 @@ export interface TokenPayload {
 export const redisService = {
   // Kiểm tra key tồn tại
   async checkKey(key: string): Promise<boolean> {
-    try {
-      const existsKey = await redisClient.exists(key);
-      if (!existsKey){
-        return false
-      }
-      return true;
-    } catch (err) {
-      console.error(`Error checking key: ${key} in Redis:`, err);
-      throw err;
+    const existsKey = await redisClient.exists(key);
+    if (!existsKey) {
+      return false
     }
+    return true;
   },
 
   async CheckPairKeyExist(key: string): Promise<boolean> {
-    const { accessKey,refreshKey} = generatePairKey(key)
-    const checkKeyAccess = await redisService.checkKey(accessKey) 
-    const checkRefreshToken = await redisService.checkKey(refreshKey) 
-    if (!checkKeyAccess || !checkRefreshToken){
+    const { accessKey, refreshKey } = generatePairKey(key)
+    const checkKeyAccess = await redisService.checkKey(accessKey)
+    const checkRefreshToken = await redisService.checkKey(refreshKey)
+    if (!checkKeyAccess || !checkRefreshToken) {
       return false
     }
     return true
@@ -49,10 +45,23 @@ export const redisService = {
   async deletePairKeys(key: string): Promise<boolean> {
     const { accessKey, refreshKey } = generatePairKey(key)
     const checkKeyAccess = await redisService.deleteKeys(accessKey)
-    const checkRefreshToken = await redisService.deleteKeys(refreshKey) 
+    const checkRefreshToken = await redisService.deleteKeys(refreshKey)
     if (!checkKeyAccess || !checkRefreshToken) throw new ConflictError("Conflict del key")
     return true
   },
+
+ /**
+  * 
+  * @param categorySlug - key string <-> get string (*NOT AVAILIBE WITH JSON )
+  *
+  */
+  async getValue(categorySlug:string){
+    const cachedData = await redisClient.get(categorySlug);
+    console.log(cachedData);
+    if(!cachedData) throw new NotFoundError("Nout found cached value")
+    return cachedData; 
+  },
+  
 
   // Xóa key khỏi Redis
   async deleteKeys(key: string): Promise<boolean> {
@@ -79,9 +88,7 @@ export const redisService = {
       const timeRefresh = parseInt(
         process.env.REFRESH_TOKEN_EXPIRE_TIME_REDIS || "300"
       );
-
-      const {accessKey,refreshKey} = generatePairKey(key)
-
+      const { accessKey, refreshKey } = generatePairKey(key)
       await redisClient.setEx(accessKey, timeAccess, accessToken);
       await redisClient.setEx(refreshKey, timeRefresh, refreshToken);
       console.log(`::REDIS-CLIENT:: Tokens for userId:${key} saved to Redis.`);
@@ -91,38 +98,31 @@ export const redisService = {
     }
   },
 
-  async getKeyPostInRedis(key: string){
-    try {
-      const timeAccess = parseInt(
-        process.env.ACCESS_TOKEN_EXPIRE_TIME_REDIS || "30"
-      );
-      const NewJsonKey = await redisClient.json.get(key, {
-        path: "$",
-      });
-      
-      return NewJsonKey
-    } catch (error) {
-      throw error
+  async getKeyPostInRedis(key: string) {
+    const cachedPost = await redisClient.json.get(key, {
+      path: "$",
+    });
+    if (!cachedPost){
+      throw new NotFoundError("Error: post not found in cache");
     }
-  },
-
-  async getValuefromKeyPost(key:string){
+    return {cachedPost}
 
   },
 
-  async saveJsonPostToRedis(key:string,data:any):Promise<any>{
+  async getValuefromKeyPost(key: string) {
+
+  },
+
+  async saveJsonPostToRedis(key: string, data: any): Promise<any> {
     try {
-
-      const timeAccess = parseInt(
-        process.env.ACCESS_POST_EXPIRE_TIME_REDIS || "604800"
-      );
-      const NewJsonKey = await redisClient.json.set(key,"$",data)
+      const timeAccess = Number(
+        process.env.ACCESS_POST_EXPIRE_TIME_REDIS 
+      ) || 30 * 24 * 60 * 60 
+      const NewJsonKey = await redisClient.json.set(key, "$", data)
       await redisClient.expire(key, timeAccess);
-      console.log(`Key ${key} will expire in ${timeAccess} seconds ~ 7 days`);
-      console.log("saved post to redis");
+      console.log("Saved new post to redis");
       return NewJsonKey
     } catch (error) {
-      console.error(error);
       throw error
     }
   },
@@ -140,14 +140,7 @@ export const redisService = {
       totalPages: Math.ceil(total / limit)
     }
   },
-  async SaveViewdId(key:string,data:any):Promise<any>{
-    const {viewKey} = generateViewdKeyPost(key)
-    const expriedTime = 30 * 24 * 60 * 60 || Number(process.env.expiredSaveViewd)
-    const viewedPost = await redisClient.lPush(viewKey, JSON.stringify(data))
-    await redisClient.expire(viewKey, expriedTime); // 30 ngày
-    return viewedPost
-  },
-  async GetSaveBookmarkId(key: string, page: number, limit: number): Promise<any> {
+  async GetSavedBookmarkUser(key: string, page: number, limit: number): Promise<any> {
     const start = (page - 1) * limit;
     const end = start + limit - 1;
     const { BookmarkKey } = generateBookmarkKeyPost(key)
@@ -160,10 +153,23 @@ export const redisService = {
       totalPages: Math.ceil(total / limit)
     }
   },
+  async SaveViewdId(key: string, data: any): Promise<any> {
+    const { viewKey } = generateViewdKeyPost(key);
+    const expriedTime = 30 * 24 * 60 * 60 || Number(process.env.expiredSaveViewd);
+    //get all value from user 
+    // const existingData = await redisClient.lRange(viewKey, 0, -1);
+    // // check id <-> all id in redis
+    // const existId = HelperExtractId(existingData,data.id)
+    // console.log(existId);
+    //TODO: bug - get duplicate key id
+    const viewedPost = await redisClient.lPush(viewKey, JSON.stringify(data));
+    await redisClient.expire(viewKey, expriedTime); // 30 ngày
+    return JSON.stringify(data);
 
-  async SaveBookmarkId(key: string, data: any): Promise<any> {
+  },
+  async SaveBookmarkUser(key: string, data: any): Promise<any> {
     const { BookmarkKey } = generateBookmarkKeyPost(key)
-    const expriedTime = 30 * 24 * 60 * 60 || Number(process.env.expiredSaveViewd)
+    const expriedTime = 30 * 24 * 60 * 60 || Number(process.env.expiredSaveBookmark)
     const viewedPost = await redisClient.lPush(BookmarkKey, JSON.stringify(data))
     await redisClient.expire(BookmarkKey, expriedTime); // 30 ngày
     return viewedPost
@@ -192,19 +198,6 @@ export const redisService = {
     }
   },
 
-  // Kiểm tra giá trị Redis
-  async getKeyStatus(key: string): Promise<any>{
-    try {
-      const accessToken = await redisClient.get(key);
-      return accessToken;
-    } catch (err) {
-      console.error("Error checking Redis values:", err);
-      throw err;
-    }
-  },
-
-
-
 
   // Kiểm tra thời gian hết hạn của key
   async getKeyExpiration(key: string): Promise<string> {
@@ -222,10 +215,11 @@ export const redisService = {
       throw err;
     }
   },
-  async CheckAccessMiddleware(key:string):Promise<boolean>{
+
+  async CheckAccessMiddleware(key: string): Promise<boolean> {
     const accessKey = `accessToken:${key}`
     const result = await redisClient.get(accessKey)
-    if(!result) throw new NotFoundError("Not found key") 
+    if (!result) throw new NotFoundError("Not found key")
     return true
   }
 };

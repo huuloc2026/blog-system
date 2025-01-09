@@ -7,8 +7,7 @@ import errorHandler from "middlewares/errorHandler";
 import { connectRedis } from "modules/Redis/redis.init";
 import { serverAdapter } from "modules/BullBoard/Bullboard";
 import { emailWorker } from "modules/BullMQ/emai.process";
-
-
+import cors from 'cors'
 
 console.clear()
 const app = express();
@@ -19,7 +18,15 @@ app.use(express.json({ limit: '50kb' }));
 app.use(express.urlencoded({ limit: '50kb', extended: true }));
 app.use(cookieParser());
 app.use('/v1',router)
-app.use("/admin/queues", serverAdapter.getRouter()); // bullboardMQ
+app.use("/admin/queues", serverAdapter.getRouter()); 
+app.use(cors({
+    origin: 'http://localhost:3001',
+    methods: ['GET', 'POST', 'PUT', 'DELETE','OPTIONS'],
+    allowedHeaders: ['Content-Type'],
+    preflightContinue: false,
+}));
+app.options('*', cors()); 
+
 
 
 //test handler
@@ -47,7 +54,6 @@ app.use(errorHandler);
         //TODO: DISABLE TAM THOI DE TRANH SPAM
         //emailWorker
 
-        
         // Khởi động server
         app.listen(port, () => {
             console.log(`Server running on http://localhost:${port}`);

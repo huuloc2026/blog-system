@@ -24,3 +24,7 @@ export const generateBookmarkKeyPost = (key: string | number) => {
     return { BookmarkKey }
 }
 
+export const generateSlugKeyPost = (key:string|number,page:number) => {
+    const SlugKey= `Post:catogory=${key}:page=${page}`
+    return {SlugKey}
+}

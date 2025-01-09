@@ -12,14 +12,45 @@ export class CommentController {
     addComment: RequestHandler = (
         async (req: Request, res: Response, next: NextFunction): Promise<any> => {
             const { postId, content, parentId } = req.body;
-
             const userId = req.userId;
-            if(!userId) throw new NotFoundError("Can not found id")
+            if (!userId) throw new NotFoundError("User ID not found");
             const comment = await this.commentService.addComment(userId, postId, content, parentId);
-            return res.status(201).json({comment});
+            return res.status(201).json({ comment });
         }
     )
+    updateComment: RequestHandler = (
+        async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+            const { commentId } = req.params
+            const { content } = req.body;
+            const userId = req.userId;
+            if (!userId) throw new NotFoundError("User ID not found");
+            if (!commentId || !content) throw new NotFoundError("Comment ID and content are required");
+            const updatedComment = await this.commentService.updateComment(userId, commentId, content);
+            return res.status(200).json(updatedComment);
+        }
 
+    )
+
+    deleteComment: RequestHandler = (
+        async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+            const { commentId } = req.params
+            const userId = req.userId;
+            if (!userId) throw new NotFoundError("User ID not found");
+            if (!commentId) throw new NotFoundError("Comment ID are required");
+            const updatedComment = await this.commentService.deleteComment(userId, commentId);
+            return res.status(200).json(updatedComment);
+        }
+
+    )
+    async hideComment(req: Request, res: Response, next: NextFunction) {
+        return res.send(`oke route hideComment - Route Admin - Mod - hide comments `)
+        // const userId = req.userId
+        // const { commentId } = req.params;
+        // if (!userId) throw new NotFoundError("Can not found id")
+        // await this.commentService.deleteComment(userId, Number(commentId));
+        // res.status(204).send();
+
+    }
     // async addComment(req: Request, res: Response, next: NextFunction) {
     //     const { postId, content, parentId } = req.body;
     //     console.log({ postId, content, parentId });
@@ -34,35 +65,5 @@ export class CommentController {
         return res.send(`oke getComments `)
         // const comments = await this.commentService.getComments(Number(postId));
         // res.status(200).json(comments);
-    }
-
-    async updateComment(req: Request, res: Response, next: NextFunction) {
-
-        return res.send(`oke route updateComment `)
-        // const { content } = req.body;
-        // // const userId = req.user.id;
-        // const { commentId } = req.params;
-        // const updatedComment = await this.commentService.updateComment(userId, Number(commentId), content);
-        // res.status(200).json(updatedComment);
-
-    }
-
-    async deleteComment(req: Request, res: Response, next: NextFunction) {
-        return res.send(`oke route deleteComment `)
-        // const userId = req.userId
-        // const { commentId } = req.params;
-        // if (!userId) throw new NotFoundError("Can not found id")
-        // await this.commentService.deleteComment(userId, Number(commentId));
-        // res.status(204).send();
-
-    }
-    async hideComment(req: Request, res: Response, next: NextFunction) {
-        return res.send(`oke route hideComment - Route Admin - Mod - hide comments `)
-        // const userId = req.userId
-        // const { commentId } = req.params;
-        // if (!userId) throw new NotFoundError("Can not found id")
-        // await this.commentService.deleteComment(userId, Number(commentId));
-        // res.status(204).send();
-
     }
 }

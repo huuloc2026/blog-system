@@ -3,16 +3,14 @@ import { User } from "modules/Users/user.entity";
 import AppDataSource from "database/data-source";
 import { randomUUID } from "crypto";
 import { hashPassword, verifyPassword} from "utils/PasswordUtil";
-import { Inject, Service } from "typedi";
+
+import { Service } from "typedi";
 import { IUser } from "./user.interface";
 import { randomNumber, randomSalt } from "utils/randomverifycode";
-import { generateAccessToken, generateRefreshToken } from "modules/JWT/jwtUtil";
-import { sendEmail } from "modules/nodemailer/nodemailer";
 import { emailSending } from "modules/BullMQ/queue";
 
 import { ApiError, AuthorizedError, NotFoundError } from "utils/ApiError";
-import { StatusCodes } from "http-status-codes";
-import { AuthService } from "modules/Auth/auth.services";
+
 import { validateDate } from "utils/validatedoB";
 
 

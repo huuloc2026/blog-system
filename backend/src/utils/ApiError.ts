@@ -47,3 +47,22 @@ export class ConflictError extends ApiError {
     this.statusCode = StatusCodes.CONFLICT;
   }
 }
+
+export class ResourceUnavailableError extends ApiError {
+  public readonly statusCode: number;
+  constructor(message: string = ReasonPhrases.GONE) {
+    super(message, true);
+    this.statusCode = StatusCodes.GONE;
+  }
+}
+
+export class ForbiddenError extends ApiError {
+  public readonly statusCode: number;
+  constructor(message: string = ReasonPhrases.FORBIDDEN) {
+    super(message, true);
+    this.statusCode = StatusCodes.FORBIDDEN;
+  }
+}
+
+
+

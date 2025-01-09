@@ -13,8 +13,8 @@ import {
 
 @Entity("comments")
 export class Comment {
-    @PrimaryGeneratedColumn()
-    idComment!: number;
+    @PrimaryGeneratedColumn('uuid')
+    idComment!: string;
 
     @Column({ type: "varchar", length: 250 })
     content!: string;
@@ -37,8 +37,8 @@ export class Comment {
     user!: User;
 
     // Liên kết với bình luận cha
-    @ManyToOne(() => Comment, (comment) => comment.idComment, { nullable: true })
-    parentComment?: Comment | number;
+    @ManyToOne(() => Comment, (comment) => comment.idComment, { cascade: true, onDelete: "CASCADE" ,nullable: true })
+    parentComment?: Comment | string;
 
     // // Danh sách các phản hồi
     // @OneToMany(() => Comment, (comment) => comment.parentComment)
